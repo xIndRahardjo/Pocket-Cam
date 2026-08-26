@@ -1,0 +1,20 @@
+{
+  "name": "pocket-camera-simulator",
+  "version": "1.0.0",
+  "description": "Pocket Camera Web Simulator dengan Simulasi Film Fujifilm 2025, Game Boy Camera, Nintendo 3DS Digicam, dan Filter Retro.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "pocket-camera",
+    "fujifilm",
+    "gameboy-camera",
+    "retro-filters",
+    "canvas",
+    "webrtc"
+  ],
+  "author": "",
+  "license": "MIT"
+}
