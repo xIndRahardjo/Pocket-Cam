@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenSettings = document.getElementById('btn-open-settings');
   const btnCloseSettings = document.getElementById('btn-close-settings');
   const settingsDrawer = document.getElementById('settings-drawer');
+  const btnFlashToggle = document.getElementById('btn-flash-toggle');
+  const flashIconLabel = document.getElementById('flash-icon-label');
 
   // C++ Code Panel
   const btnToggleCpp = document.getElementById('btn-toggle-cpp');
@@ -29,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Shutter & Camera Controls
   const btnShutter = document.getElementById('btn-shutter');
   const btnFlipCam = document.getElementById('btn-flip-cam');
-  const btnSourceToggle = document.getElementById('btn-source-toggle');
 
   // Gallery Controls
   const btnGallery = document.getElementById('btn-gallery');
@@ -135,14 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
       lcdFilterName.textContent = filterObj.name.toUpperCase();
       cppActiveFilterName.textContent = filterObj.name;
 
-      // Auto switch category dropdown if selected filter belongs to another category
       if (categoryDropdown.value !== filterObj.category && categoryDropdown.value !== 'all') {
         categoryDropdown.value = filterObj.category;
         renderFilterSlider(filterObj.category);
       }
     }
 
-    // Highlight active pill
     document.querySelectorAll('.filter-pill').forEach(pill => {
       pill.classList.toggle('active', pill.dataset.id === filterId);
     });
@@ -156,13 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cppCodeBlock.textContent = code;
   }
 
-  // Dropdown Category Change Listener
   categoryDropdown.addEventListener('change', (e) => {
     renderFilterSlider(e.target.value);
     playBeepSound(500, 0.03);
   });
 
-  // Slider Params Sync
   function syncParams() {
     const params = {
       grain: parseInt(sliderGrain.value, 10),
@@ -187,8 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function triggerShutter() {
     playShutterSound();
 
-    flashOverlay.classList.add('active');
-    setTimeout(() => flashOverlay.classList.remove('active'), 100);
+    if (camera.flashMode === 'on' || camera.flashMode === 'auto') {
+      flashOverlay.classList.add('active');
+      setTimeout(() => flashOverlay.classList.remove('active'), 120);
+    }
 
     const dataUrl = camera.captureSnapshot();
     const activeFilterObj = PocketFilters.registry[camera.activeFilterId];
@@ -219,15 +218,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnShutter.addEventListener('click', triggerShutter);
 
-  // Camera Flip & Source Toggle
+  // Flash LED Toggle
+  btnFlashToggle.addEventListener('click', () => {
+    const mode = camera.toggleFlash();
+    playBeepSound(700, 0.05);
+    if (mode === 'on') {
+      flashIconLabel.textContent = '⚡ ON';
+      btnFlashToggle.style.color = '#f5a623';
+    } else if (mode === 'auto') {
+      flashIconLabel.textContent = '⚡ A';
+      btnFlashToggle.style.color = '#00e676';
+    } else {
+      flashIconLabel.textContent = '⚡';
+      btnFlashToggle.style.color = '#ffffff';
+    }
+  });
+
+  // Camera Flip Button
   btnFlipCam.addEventListener('click', async () => {
     await camera.toggleFacingMode();
     playBeepSound(750, 0.06);
-  });
-
-  btnSourceToggle.addEventListener('click', () => {
-    camera.toggleSource();
-    playBeepSound(700, 0.05);
   });
 
   // Settings Drawer Event Handlers

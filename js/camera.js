@@ -12,6 +12,7 @@ class PocketCamera {
     this.facingMode = 'user'; // 'user' (front) or 'environment' (back)
     this.mediaStream = null;
     this.sampleImg = null;
+    this.flashMode = 'off'; // 'off', 'on', 'auto'
     
     this.activeFilterId = 'fuji_classic_chrome';
     this.filterParams = {
@@ -78,7 +79,6 @@ class PocketCamera {
     await this.stopMediaTracks();
 
     try {
-      // Try preferred facing mode first, fallback if unavailable
       let constraints = {
         video: {
           width: { ideal: 640 },
@@ -116,14 +116,21 @@ class PocketCamera {
     return this.facingMode;
   }
 
-  toggleSource() {
-    if (this.currentSource === 'webcam') {
-      this.stopMediaTracks();
-      this.currentSource = 'sample';
-    } else {
-      this.startWebcam(this.facingMode);
+  toggleFlash() {
+    const modes = ['off', 'on', 'auto'];
+    const nextIdx = (modes.indexOf(this.flashMode) + 1) % modes.length;
+    this.flashMode = modes[nextIdx];
+
+    // Attempt WebRTC torch control on supported mobile devices
+    if (this.mediaStream) {
+      const track = this.mediaStream.getVideoTracks()[0];
+      if (track && track.getCapabilities && track.getCapabilities().torch) {
+        track.applyConstraints({
+          advanced: [{ torch: (this.flashMode === 'on') }]
+        }).catch(e => console.warn('Torch constraint error:', e));
+      }
     }
-    return this.currentSource;
+    return this.flashMode;
   }
 
   setResolution(width, height) {
@@ -182,13 +189,28 @@ class PocketCamera {
     this.ctx.clearRect(0, 0, w, h);
 
     if (this.currentSource === 'webcam' && this.video.readyState >= 2) {
+      const vw = this.video.videoWidth;
+      const vh = this.video.videoHeight;
+      
+      // Calculate exact aspect ratio cropping to match canvas pixel ratio
+      let sx = 0, sy = 0, sw = vw, sh = vh;
+      const targetRatio = w / h;
+      const videoRatio = vw / vh;
+      
+      if (videoRatio > targetRatio) {
+        sw = vh * targetRatio;
+        sx = (vw - sw) / 2;
+      } else {
+        sh = vw / targetRatio;
+        sy = (vh - sh) / 2;
+      }
+
       this.ctx.save();
-      // Mirror canvas ONLY for front camera ('user'), do not mirror back camera ('environment')
       if (this.facingMode === 'user') {
         this.ctx.scale(-1, 1);
-        this.ctx.drawImage(this.video, -w, 0, w, h);
+        this.ctx.drawImage(this.video, sx, sy, sw, sh, -w, 0, w, h);
       } else {
-        this.ctx.drawImage(this.video, 0, 0, w, h);
+        this.ctx.drawImage(this.video, sx, sy, sw, sh, 0, 0, w, h);
       }
       this.ctx.restore();
     } else if (this.sampleImg && this.sampleImg.complete) {

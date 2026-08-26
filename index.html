@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pocket Camera Web App (Fujifilm & Retro Filters)</title>
   <meta name="description" content="Aplikasi Kamera Smartphone Web dengan Simulasi Film Fujifilm, Game Boy Camera, 3DS Digicam, dan C++ Exporter.">
-  <link rel="stylesheet" href="styles.css?v=2.2.0">
+  <link rel="stylesheet" href="styles.css?v=2.3.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -30,13 +30,14 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           C++ Code
         </button>
-        <button id="btn-source-toggle" class="icon-btn" title="Ganti Source Kamera/Sample">
-          🖼️
+        <!-- Replaced duplicate gallery icon with LED Flash Toggle -->
+        <button id="btn-flash-toggle" class="icon-btn" title="Toggle Flash LED">
+          <span id="flash-icon-label">⚡</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Viewfinder Section (Edge to Edge, Uncropped Aspect Ratio) -->
+    <!-- Main Viewfinder Section (Adaptive Edge to Edge) -->
     <main class="viewfinder-section">
       <div class="viewfinder-container">
         <!-- Live Viewfinder Canvas -->
@@ -76,7 +77,7 @@
 
       <!-- 3. Primary Smartphone Camera Shutter Row -->
       <div class="shutter-row">
-        <!-- Gallery Preview Button -->
+        <!-- Single Main Gallery Preview Button -->
         <button id="btn-gallery" class="gallery-thumb-btn" title="Buka Galeri Foto">
           <div id="gallery-thumb-preview" class="thumb-preview empty">
             <span>📷</span>
