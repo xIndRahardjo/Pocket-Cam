@@ -955,7 +955,7 @@ pre code {
 }
 
 /* ==========================================
- * MOBILE RESPONSIVE MEDIA QUERIES (FLUID & ULTRA-COMPACT)
+ * MOBILE RESPONSIVE MEDIA QUERIES (ZERO OVERFLOW GUARANTEE)
  * ========================================== */
 
 @media (max-width: 1024px) {
@@ -971,159 +971,170 @@ pre code {
 
 @media (max-width: 600px) {
   .app-container {
-    padding: 0.5rem 0.35rem;
+    padding: 0.35rem 0.2rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
   .app-header {
     flex-direction: row;
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
+    gap: 0.4rem;
   }
 
   .brand h1 {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
   }
 
   .header-actions .btn {
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.65rem;
   }
 
   .badge {
     display: none;
   }
 
-  /* FLUID HARDWARE CASING FIT */
+  /* FLUID CASING GUARANTEED TO FIT MOBILE SCREEN */
   .camera-body {
-    width: 100%;
-    max-width: 100%;
-    padding: 0.75rem 0.4rem;
-    border-radius: 16px;
-    border-width: 1px;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.6rem 0.35rem !important;
+    border-radius: 14px !important;
+    border-width: 1px !important;
+    box-sizing: border-box !important;
   }
 
   .camera-top-bar {
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.4rem;
   }
 
   .lens-housing {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border-width: 2px;
   }
 
   .lens-glass {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 
   .brand-label {
-    font-size: 0.58rem;
+    font-size: 0.52rem;
+  }
+
+  .speaker-grill span {
+    height: 10px;
+    width: 2px;
   }
 
   .lcd-housing {
-    padding: 0.35rem;
-    margin-bottom: 0.6rem;
-    border-radius: 10px;
+    padding: 0.3rem !important;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .lcd-header, .lcd-footer {
-    font-size: 0.48rem;
-    padding: 0.25rem 0.35rem;
+    font-size: 0.42rem !important;
+    padding: 0.2rem 0.25rem !important;
   }
 
-  .hardware-controls {
-    padding: 0;
-    gap: 0.2rem;
-    width: 100%;
-  }
-
-  /* Ultra-Compact Controls for Small Mobile Viewports (320px - 412px) */
-  .dpad-btn {
-    width: 25px;
-    height: 25px;
-    font-size: 0.55rem;
-  }
-
-  .dpad-center {
-    width: 25px;
-    height: 25px;
-  }
-
-  .center-hardware-info {
-    gap: 0.15rem;
-  }
-
-  .center-label {
-    font-size: 0.4rem;
-  }
-
-  .action-buttons-group {
-    gap: 0.25rem;
-  }
-
-  .shutter-btn {
-    width: 38px;
-    height: 38px;
-  }
-
-  .secondary-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 0.75rem;
-  }
-
-  .btn-with-label label {
-    font-size: 0.38rem;
-  }
-
-  .keyboard-hints {
-    display: none;
-  }
-
-  .panel-card {
-    padding: 0.8rem;
-    border-radius: 12px;
-  }
-
-  .filter-options-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.4rem;
-  }
-
-  .sliders-grid {
-    grid-template-columns: 1fr;
-    gap: 0.6rem;
-  }
-
-  .cpp-panel {
-    width: 100vw;
-  }
-}
-
-@media (max-width: 360px) {
   #lcd-res-indicator {
     display: none;
   }
 
+  /* ULTRA COMPACT HARDWARE CONTROLS (FIT ANY 300px+ MOBILE SCREEN) */
+  .hardware-controls {
+    padding: 0;
+    gap: 0.15rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+
+  .dpad-group {
+    flex-shrink: 0;
+  }
+
   .dpad-btn {
-    width: 22px;
-    height: 22px;
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 0.5rem !important;
   }
 
   .dpad-center {
-    width: 22px;
-    height: 22px;
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .center-hardware-info {
+    gap: 0.1rem !important;
+    flex-shrink: 0;
+  }
+
+  .center-label {
+    font-size: 0.38rem !important;
+  }
+
+  .action-buttons-group {
+    gap: 0.2rem !important;
+    flex-shrink: 0;
   }
 
   .shutter-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 2px !important;
   }
 
   .secondary-btn {
-    width: 26px;
-    height: 26px;
-    font-size: 0.7rem;
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .btn-with-label label {
+    font-size: 0.36rem !important;
+  }
+
+  .keyboard-hints {
+    display: none !important;
+  }
+
+  .panel-card {
+    padding: 0.75rem !important;
+    border-radius: 12px;
+  }
+
+  .filter-options-grid {
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)) !important;
+    gap: 0.35rem !important;
+  }
+
+  .filter-card {
+    padding: 0.5rem !important;
+  }
+
+  .filter-card .filter-title {
+    font-size: 0.72rem !important;
+  }
+
+  .filter-card .filter-desc {
+    font-size: 0.62rem !important;
+  }
+
+  .sliders-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .cpp-panel {
+    width: 100vw !important;
   }
 }
