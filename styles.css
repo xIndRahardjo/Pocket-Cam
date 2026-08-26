@@ -75,17 +75,16 @@ html, body {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
-  padding: 0 0.55rem;
-  min-width: 40px;
+  width: 40px;
   height: 40px;
-  border-radius: 20px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   backdrop-filter: blur(10px);
   transition: all 0.2s ease;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
@@ -190,19 +189,19 @@ html, body {
   display: none;
 }
 
-/* Bright Flash Animation Overlay */
+/* Flash animation */
 .flash-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #ffffff !important;
+  background: white;
   opacity: 0;
   pointer-events: none;
-  z-index: 99;
-  transition: opacity 0.04s ease-out;
+  z-index: 5;
+  transition: opacity 0.05s ease-out;
 }
 
 .flash-overlay.active {
-  opacity: 1 !important;
+  opacity: 0.95;
 }
 
 /* Active Filter Overlay Badge */
@@ -753,6 +752,11 @@ pre code {
   .status-pill {
     font-size: 0.65rem !important;
     padding: 0.25rem 0.45rem !important;
+  }
+
+  .icon-btn {
+    width: 36px !important;
+    height: 36px !important;
   }
 
   .pill-btn {

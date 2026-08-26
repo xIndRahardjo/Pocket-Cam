@@ -180,16 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
     s.addEventListener('input', syncParams);
   });
 
-  // --- SHUTTER & PHOTO CAPTURE WITH FLASH ---
+  // --- SHUTTER & PHOTO CAPTURE ---
   function triggerShutter() {
     playShutterSound();
 
-    if (camera.flashMode !== 'off') {
+    if (camera.flashMode === 'on' || camera.flashMode === 'auto') {
+      // 1. Screen Flash overlay pulse
       flashOverlay.classList.add('active');
-      camera.triggerHardwareFlash();
-      setTimeout(() => {
-        flashOverlay.classList.remove('active');
-      }, 250);
+      setTimeout(() => flashOverlay.classList.remove('active'), 250);
+
+      // 2. Hardware LED Torch pulse (for back camera flashlight on Android)
+      camera.pulseFlashlight();
     }
 
     const dataUrl = camera.captureSnapshot();
@@ -222,26 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
   btnShutter.addEventListener('click', triggerShutter);
 
   // Flash LED Toggle
-  function updateFlashUI(mode) {
+  btnFlashToggle.addEventListener('click', async () => {
+    const mode = await camera.toggleFlash();
+    playBeepSound(700, 0.05);
     if (mode === 'on') {
       flashIconLabel.textContent = '⚡ ON';
       btnFlashToggle.style.color = '#f5a623';
-      btnFlashToggle.style.borderColor = '#f5a623';
     } else if (mode === 'auto') {
-      flashIconLabel.textContent = '⚡ AUTO';
+      flashIconLabel.textContent = '⚡ A';
       btnFlashToggle.style.color = '#00e676';
-      btnFlashToggle.style.borderColor = '#00e676';
     } else {
-      flashIconLabel.textContent = '⚡ OFF';
-      btnFlashToggle.style.color = '#8b949e';
-      btnFlashToggle.style.borderColor = 'rgba(255,255,255,0.2)';
+      flashIconLabel.textContent = '⚡';
+      btnFlashToggle.style.color = '#ffffff';
     }
-  }
-
-  btnFlashToggle.addEventListener('click', () => {
-    const mode = camera.toggleFlash();
-    updateFlashUI(mode);
-    playBeepSound(700, 0.05);
   });
 
   // Camera Flip Button
@@ -343,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial Setup
-  updateFlashUI(camera.flashMode);
   renderFilterSlider('fujifilm');
   selectFilterById('fuji_classic_chrome');
   syncParams();
