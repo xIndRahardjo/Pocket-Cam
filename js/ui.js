@@ -180,13 +180,16 @@ document.addEventListener('DOMContentLoaded', () => {
     s.addEventListener('input', syncParams);
   });
 
-  // --- SHUTTER & PHOTO CAPTURE ---
+  // --- SHUTTER & PHOTO CAPTURE WITH FLASH ---
   function triggerShutter() {
     playShutterSound();
 
-    if (camera.flashMode === 'on' || camera.flashMode === 'auto') {
+    if (camera.flashMode !== 'off') {
       flashOverlay.classList.add('active');
-      setTimeout(() => flashOverlay.classList.remove('active'), 120);
+      camera.triggerHardwareFlash();
+      setTimeout(() => {
+        flashOverlay.classList.remove('active');
+      }, 250);
     }
 
     const dataUrl = camera.captureSnapshot();
@@ -219,19 +222,26 @@ document.addEventListener('DOMContentLoaded', () => {
   btnShutter.addEventListener('click', triggerShutter);
 
   // Flash LED Toggle
-  btnFlashToggle.addEventListener('click', () => {
-    const mode = camera.toggleFlash();
-    playBeepSound(700, 0.05);
+  function updateFlashUI(mode) {
     if (mode === 'on') {
       flashIconLabel.textContent = '⚡ ON';
       btnFlashToggle.style.color = '#f5a623';
+      btnFlashToggle.style.borderColor = '#f5a623';
     } else if (mode === 'auto') {
-      flashIconLabel.textContent = '⚡ A';
+      flashIconLabel.textContent = '⚡ AUTO';
       btnFlashToggle.style.color = '#00e676';
+      btnFlashToggle.style.borderColor = '#00e676';
     } else {
-      flashIconLabel.textContent = '⚡';
-      btnFlashToggle.style.color = '#ffffff';
+      flashIconLabel.textContent = '⚡ OFF';
+      btnFlashToggle.style.color = '#8b949e';
+      btnFlashToggle.style.borderColor = 'rgba(255,255,255,0.2)';
     }
+  }
+
+  btnFlashToggle.addEventListener('click', () => {
+    const mode = camera.toggleFlash();
+    updateFlashUI(mode);
+    playBeepSound(700, 0.05);
   });
 
   // Camera Flip Button
@@ -333,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial Setup
+  updateFlashUI(camera.flashMode);
   renderFilterSlider('fujifilm');
   selectFilterById('fuji_classic_chrome');
   syncParams();

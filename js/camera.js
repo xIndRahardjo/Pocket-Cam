@@ -12,7 +12,7 @@ class PocketCamera {
     this.facingMode = 'user'; // 'user' (front) or 'environment' (back)
     this.mediaStream = null;
     this.sampleImg = null;
-    this.flashMode = 'off'; // 'off', 'on', 'auto'
+    this.flashMode = 'on'; // Default to 'on' for immediate flash feedback
     
     this.activeFilterId = 'fuji_classic_chrome';
     this.filterParams = {
@@ -117,20 +117,26 @@ class PocketCamera {
   }
 
   toggleFlash() {
-    const modes = ['off', 'on', 'auto'];
+    const modes = ['on', 'auto', 'off'];
     const nextIdx = (modes.indexOf(this.flashMode) + 1) % modes.length;
     this.flashMode = modes[nextIdx];
+    return this.flashMode;
+  }
 
-    // Attempt WebRTC torch control on supported mobile devices
-    if (this.mediaStream) {
+  async triggerHardwareFlash() {
+    if (this.mediaStream && (this.flashMode === 'on' || this.flashMode === 'auto')) {
       const track = this.mediaStream.getVideoTracks()[0];
       if (track && track.getCapabilities && track.getCapabilities().torch) {
-        track.applyConstraints({
-          advanced: [{ torch: (this.flashMode === 'on') }]
-        }).catch(e => console.warn('Torch constraint error:', e));
+        try {
+          await track.applyConstraints({ advanced: [{ torch: true }] });
+          setTimeout(() => {
+            track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+          }, 350);
+        } catch (e) {
+          console.warn('Hardware LED Torch activation error:', e);
+        }
       }
     }
-    return this.flashMode;
   }
 
   setResolution(width, height) {
@@ -192,7 +198,6 @@ class PocketCamera {
       const vw = this.video.videoWidth;
       const vh = this.video.videoHeight;
       
-      // Calculate exact aspect ratio cropping to match canvas pixel ratio
       let sx = 0, sy = 0, sw = vw, sh = vh;
       const targetRatio = w / h;
       const videoRatio = vw / vh;
