@@ -729,17 +729,35 @@ pre code {
 .gallery-actions {
   display: flex;
   justify-content: space-between;
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-top: 1px solid var(--border-color);
+  gap: 0.3rem;
 }
 
-.gallery-actions a, .gallery-actions button {
-  background: none;
-  border: none;
-  color: var(--accent-blue);
-  font-size: 0.7rem;
+.gallery-actions button {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 0.68rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 6px;
   cursor: pointer;
-  text-decoration: none;
+  transition: all 0.15s ease;
+  font-weight: 600;
+}
+
+.gallery-actions button.dl-btn {
+  color: var(--accent-gold);
+  border-color: rgba(245, 166, 35, 0.4);
+}
+
+.gallery-actions button.dl-btn:hover {
+  background: var(--accent-gold);
+  color: #000;
+}
+
+.gallery-actions button.view-btn {
+  color: var(--accent-blue);
 }
 
 .gallery-actions button.del-btn {

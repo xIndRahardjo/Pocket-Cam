@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkLcdLines = document.getElementById('check-lcd-lines');
   const lcdScanlinesOverlay = document.getElementById('lcd-scanline-overlay');
 
-  // Internal State
-  let capturedPhotos = [];
+  // Internal State & Storage
+  let capturedPhotos = loadStorage();
   let filterList = Object.keys(PocketFilters.registry);
   let activeFilterIndex = 0;
 
@@ -106,6 +106,70 @@ document.addEventListener('DOMContentLoaded', () => {
     gain.connect(audioCtx.destination);
 
     whiteNoise.start();
+  }
+
+  // --- LOCALSTORAGE PERSISTENCE ---
+  function loadStorage() {
+    try {
+      const saved = localStorage.getItem('pocket_cam_photos_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.warn('Gagal membaca localStorage:', e);
+      return [];
+    }
+  }
+
+  function saveStorage() {
+    try {
+      // Limit saved photos to last 20 to avoid exceeding localStorage quota limits
+      const toSave = capturedPhotos.slice(0, 20);
+      localStorage.setItem('pocket_cam_photos_v1', JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('Storage quota exceeded, photo kept in RAM:', e);
+    }
+  }
+
+  // --- CROSS-PLATFORM RELIABLE PHOTO DOWNLOADER (BLOB BASED) ---
+  function dataURLToBlob(dataUrl) {
+    const parts = dataUrl.split(';base64,');
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
+  }
+
+  function downloadPhoto(dataUrl, filename) {
+    try {
+      const blob = dataURLToBlob(dataUrl);
+      const blobUrl = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 500);
+
+      playBeepSound(900, 0.05);
+    } catch (err) {
+      console.warn('Blob download fallback:', err);
+      // Fallback for strict mobile webviews
+      const win = window.open();
+      if (win) {
+        win.document.write(`<title>${filename}</title><img src="${dataUrl}" style="max-width:100%;">`);
+      } else {
+        alert('Silakan tekan lama foto di galeri untuk menyimpan ke HP Anda.');
+      }
+    }
   }
 
   // --- POPULATE HORIZONTAL FILTER SLIDER CAROUSEL ---
@@ -205,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     capturedPhotos.unshift(photo);
+    saveStorage();
     updateGalleryPreview();
   }
 
@@ -322,19 +387,42 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = document.createElement('div');
       item.className = 'gallery-item';
       item.innerHTML = `
-        <img src="${photo.dataUrl}" alt="Pocket Photo">
+        <img src="${photo.dataUrl}" alt="Pocket Photo" title="Tekan lama foto untuk menyimpan langsung">
         <div class="gallery-info">
           <span class="filter-tag">${photo.filterName}</span>
           <small>${photo.res} • ${photo.time}</small>
         </div>
         <div class="gallery-actions">
-          <a href="${photo.dataUrl}" download="pocket_cam_${photo.id}.png">Download</a>
-          <button class="del-btn" data-id="${photo.id}">Hapus</button>
+          <button class="dl-btn" data-id="${photo.id}">⬇️ Save</button>
+          <button class="view-btn" data-id="${photo.id}">👁️ Lihat</button>
+          <button class="del-btn" data-id="${photo.id}">🗑️ Hapus</button>
         </div>
       `;
 
+      // Download Listener (Blob Based)
+      item.querySelector('.dl-btn').addEventListener('click', () => {
+        downloadPhoto(photo.dataUrl, `pocket_cam_${photo.filterName.replace(/\s+/g, '_')}_${photo.id}.png`);
+      });
+
+      // View Full Image Listener
+      item.querySelector('.view-btn').addEventListener('click', () => {
+        const win = window.open();
+        if (win) {
+          win.document.write(`
+            <html style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+              <head><title>Pocket Cam - ${photo.filterName}</title></head>
+              <body style="margin:0; background:#000; text-align:center;">
+                <img src="${photo.dataUrl}" style="max-width:100vw; max-height:100vh; object-fit:contain;">
+              </body>
+            </html>
+          `);
+        }
+      });
+
+      // Delete Listener
       item.querySelector('.del-btn').addEventListener('click', () => {
         capturedPhotos = capturedPhotos.filter(p => p.id !== photo.id);
+        saveStorage();
         updateGalleryPreview();
         renderGallery();
       });
@@ -350,12 +438,14 @@ document.addEventListener('DOMContentLoaded', () => {
   btnClearGallery.addEventListener('click', () => {
     if (confirm('Apakah Anda yakin ingin menghapus semua foto di galeri?')) {
       capturedPhotos = [];
+      saveStorage();
       updateGalleryPreview();
       renderGallery();
     }
   });
 
   // Initial Setup
+  updateGalleryPreview();
   renderFilterSlider('fujifilm');
   selectFilterById('fuji_classic_chrome');
   syncParams();
