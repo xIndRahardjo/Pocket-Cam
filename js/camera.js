@@ -1,8 +1,6 @@
 /**
  * Pocket Camera Stream & Render Controller
- * Dual-Pipeline Architecture:
- * 1. Live Viewfinder: Ultra-Fast 60FPS Optimized Preview (No Lag)
- * 2. Photo Capture: Full High-Res Native HD Quality (1080p Crisp Snapshot)
+ * Dual-Pipeline Architecture + Native Smartphone Hardware Torch Control
  */
 
 class PocketCamera {
@@ -89,20 +87,39 @@ class PocketCamera {
     await this.stopMediaTracks();
 
     try {
-      let constraints = {
-        video: {
-          width: { ideal: 1920, max: 3840 },
-          height: { ideal: 1080, max: 2160 },
-          facingMode: { ideal: this.facingMode }
-        },
-        audio: false
+      let videoConstraints = {
+        width: { ideal: 1920, max: 3840 },
+        height: { ideal: 1080, max: 2160 },
+        facingMode: { ideal: this.facingMode }
       };
 
+      // Try searching exact back camera device for torch support
       try {
-        this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(d => d.kind === 'videoinput');
+        
+        if (this.facingMode === 'environment') {
+          const backCam = videoInputs.find(d => 
+            d.label.toLowerCase().includes('back') || 
+            d.label.toLowerCase().includes('rear') || 
+            d.label.toLowerCase().includes('0')
+          );
+          if (backCam && backCam.deviceId) {
+            videoConstraints.deviceId = { exact: backCam.deviceId };
+          }
+        }
+      } catch (e) {
+        // Enumerate devices fallback
+      }
+
+      try {
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
       } catch (err) {
-        console.warn(`Gagal membuka kamera mode ${this.facingMode}, mencoba fallback kamera standar:`, err);
-        this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        console.warn(`Gagal mengaitkan kamera ${this.facingMode}, mencoba fallback standar:`, err);
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: this.facingMode } },
+          audio: false
+        });
       }
 
       this.video.srcObject = this.mediaStream;
@@ -110,7 +127,10 @@ class PocketCamera {
       this.currentSource = 'webcam';
       this.isStreaming = true;
       
-      await this.setTorchState(this.flashMode === 'on');
+      // Auto re-apply torch state if flash mode was ON
+      if (this.flashMode === 'on') {
+        await this.enableHardwareTorch(true);
+      }
 
       this.startRenderLoop();
       return true;
@@ -133,8 +153,9 @@ class PocketCamera {
     const modes = ['off', 'on', 'auto'];
     const nextIdx = (modes.indexOf(this.flashMode) + 1) % modes.length;
     this.flashMode = modes[nextIdx];
-    await this.setTorchState(this.flashMode === 'on');
-    return this.flashMode;
+    
+    const torchApplied = await this.enableHardwareTorch(this.flashMode === 'on');
+    return { mode: this.flashMode, torchApplied };
   }
 
   toggleDateStamp() {
@@ -142,41 +163,67 @@ class PocketCamera {
     return this.showDateStamp;
   }
 
-  async setTorchState(enable) {
+  /**
+   * Directly triggers physical smartphone LED flashlight (torch) via WebRTC track constraints.
+   * Must be called within a user gesture event listener (tap/click) for mobile security compliance.
+   */
+  async enableHardwareTorch(enable) {
     if (!this.mediaStream) return false;
-    const track = this.mediaStream.getVideoTracks()[0];
-    if (!track) return false;
+    const tracks = this.mediaStream.getVideoTracks();
+    if (!tracks || tracks.length === 0) return false;
+    
+    const track = tracks[0];
 
+    // Method 1: Advanced constraint array with torch
     try {
-      const capabilities = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
-      const settings = (typeof track.getSettings === 'function') ? track.getSettings() : {};
+      await track.applyConstraints({
+        advanced: [{ torch: !!enable }]
+      });
+      console.log('Torch LED hardware berhasil diubah:', enable);
+      return true;
+    } catch (err1) {
+      console.warn('Torch constraint v1 gagal:', err1);
+    }
 
-      if (capabilities.torch || 'torch' in settings || ('getConstraints' in track && 'torch' in track.getConstraints())) {
-        await track.applyConstraints({
-          advanced: [{ torch: !!enable }]
-        });
+    // Method 2: Fill light mode fallback for some Android devices
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: !!enable }, { fillLightMode: enable ? 'flash' : 'off' }]
+      });
+      return true;
+    } catch (err2) {
+      console.warn('Torch constraint v2 (fillLightMode) gagal:', err2);
+    }
+
+    // Method 3: Direct capability check
+    try {
+      const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
+      if ('torch' in caps) {
+        await track.applyConstraints({ torch: !!enable });
         return true;
       }
-    } catch (err) {
-      console.warn('Lampu senter hardware (torch) tidak didukung browser ini:', err);
+    } catch (err3) {
+      console.warn('Torch constraint v3 gagal:', err3);
     }
+
     return false;
   }
 
   async pulseFlashlight() {
+    // Pulse physical flash for 450ms on shutter press (Android Chrome back camera)
     if (!this.mediaStream) return;
-    const track = this.mediaStream.getVideoTracks()[0];
-    if (!track) return;
+    const tracks = this.mediaStream.getVideoTracks();
+    if (!tracks || tracks.length === 0) return;
 
     try {
-      await track.applyConstraints({ advanced: [{ torch: true }] });
+      await this.enableHardwareTorch(true);
       setTimeout(async () => {
         if (this.flashMode !== 'on') {
-          await track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+          await this.enableHardwareTorch(false);
         }
-      }, 400);
+      }, 450);
     } catch (e) {
-      // Torch constraint fallback
+      // Torch fallback
     }
   }
 
@@ -237,7 +284,6 @@ class PocketCamera {
   }
 
   renderFrame() {
-    // 1. Detect Native High Resolution track dimensions
     if (this.currentSource === 'webcam' && this.video.readyState >= 2) {
       const vw = this.video.videoWidth;
       const vh = this.video.videoHeight;
@@ -246,10 +292,8 @@ class PocketCamera {
         this.nativeWidth = vw;
         this.nativeHeight = vh;
 
-        // Calculate smooth preview resolution matching exact camera aspect ratio
         if (this.isNativeRes) {
           const aspect = vw / vh;
-          // Target ~540px width for live view (butter smooth 60fps on all devices)
           const pW = Math.min(640, vw);
           const pH = Math.round(pW / aspect);
 
@@ -305,13 +349,13 @@ class PocketCamera {
       return;
     }
 
-    // Apply Active Filter on live preview
+    // Apply Active Filter
     const filterObj = PocketFilters.registry[this.activeFilterId];
     if (filterObj && filterObj.apply) {
       filterObj.apply(this.ctx, w, h, this.filterParams);
     }
 
-    // Draw Retro Digicam Date Stamp (Orange LED font at bottom right)
+    // Draw Retro Digicam Date Stamp
     if (this.showDateStamp) {
       this.ctx.save();
       const now = new Date();
@@ -333,9 +377,7 @@ class PocketCamera {
     }
   }
 
-  // --- FULL HIGH-RES NATIVE CRISP SNAPSHOT CAPTURE ---
   captureSnapshot() {
-    // Render snapshot at FULL NATIVE CAMERA RESOLUTION (e.g. 1920x1080) for crisp HD saved photos!
     const offCanvas = document.createElement('canvas');
     const w = this.isNativeRes ? this.nativeWidth : this.previewWidth;
     const h = this.isNativeRes ? this.nativeHeight : this.previewHeight;
@@ -372,13 +414,11 @@ class PocketCamera {
       oCtx.drawImage(this.sampleImg, 0, 0, w, h);
     }
 
-    // Apply Filter at Full Native HD Resolution
     const filterObj = PocketFilters.registry[this.activeFilterId];
     if (filterObj && filterObj.apply) {
       filterObj.apply(oCtx, w, h, this.filterParams);
     }
 
-    // Render Crisp Date Stamp on Snapshot
     if (this.showDateStamp) {
       oCtx.save();
       const now = new Date();
