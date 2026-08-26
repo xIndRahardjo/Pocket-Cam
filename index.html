@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pocket Camera Simulator (ESP32-CAM)</title>
   <meta name="description" content="Simulasi Pocket Camera berbasis ESP32-CAM dengan filter retro Fujifilm, Game Boy Camera, Nintendo 3DS, Pixel Art, dan C++ Code Exporter.">
   <link rel="stylesheet" href="styles.css">
@@ -19,7 +19,7 @@
         <h1>POCKET-CAM <span>SIMULATOR</span></h1>
       </div>
       <div class="header-actions">
-        <span class="badge">ESP32-CAM Target</span>
+        <span class="badge">ESP32 Target</span>
         <button id="btn-toggle-cpp" class="btn btn-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           C++ Code Exporter
@@ -70,7 +70,7 @@
 
               <div class="lcd-footer">
                 <span id="lcd-sd-status">SD: OK [0/99]</span>
-                <span id="lcd-mode">MODE: LIVE</span>
+                <span id="lcd-mode">FRONT CAM</span>
               </div>
             </div>
           </div>
@@ -103,16 +103,16 @@
                 <label>SHUTTER</label>
               </div>
               <div class="btn-with-label">
+                <button id="btn-flip-cam" class="hardware-btn secondary-btn" title="Alih Kamera Depan/Belakang">
+                  🔄
+                </button>
+                <label>FLIP</label>
+              </div>
+              <div class="btn-with-label">
                 <button id="btn-gallery" class="hardware-btn secondary-btn" title="Buka Galeri (G)">
                   📷
                 </button>
                 <label>GALLERY</label>
-              </div>
-              <div class="btn-with-label">
-                <button id="btn-source-toggle" class="hardware-btn secondary-btn" title="Ganti Source Webcam/Sample">
-                  🔄
-                </button>
-                <label>SOURCE</label>
               </div>
             </div>
           </div>

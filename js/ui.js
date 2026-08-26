@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lcdFilterName = document.getElementById('lcd-filter-name');
   const lcdResIndicator = document.getElementById('lcd-res-indicator');
   const lcdSdStatus = document.getElementById('lcd-sd-status');
+  const lcdMode = document.getElementById('lcd-mode');
   
   // Sliders
   const sliderGrain = document.getElementById('slider-grain');
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnShutter = document.getElementById('btn-shutter');
   const btnGallery = document.getElementById('btn-gallery');
   const btnSourceToggle = document.getElementById('btn-source-toggle');
+  const btnFlipCam = document.getElementById('btn-flip-cam');
   const btnDpadLeft = document.getElementById('btn-dpad-left');
   const btnDpadRight = document.getElementById('btn-dpad-right');
   const btnDpadUp = document.getElementById('btn-dpad-up');
@@ -80,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function playShutterSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    // Mechanical shutter noise synthesis
     const bufferSize = audioCtx.sampleRate * 0.15;
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const output = buffer.getChannelData(0);
@@ -106,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
     whiteNoise.start();
   }
 
-  // --- RENDER FILTER OPTIONS CARDS ---
   function renderFilterOptions(category) {
     filterContainer.innerHTML = '';
     
@@ -140,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
       cppActiveFilterName.textContent = filterObj.name;
     }
 
-    // Update active highlight in UI
     document.querySelectorAll('.filter-card').forEach(card => {
       card.classList.toggle('active', card.dataset.id === filterId);
     });
@@ -154,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cppCodeBlock.textContent = code;
   }
 
-  // --- TAB BUTTON HANDLERS ---
   tabBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
       tabBtns.forEach(b => b.classList.remove('active'));
@@ -165,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- SLIDERS EVENT LISTENERS ---
   function syncParams() {
     const params = {
       grain: parseInt(sliderGrain.value, 10),
@@ -186,15 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
     s.addEventListener('input', syncParams);
   });
 
-  // --- HARDWARE BUTTON HANDLERS ---
   function triggerShutter() {
     playShutterSound();
 
-    // Trigger visual flash
     flashOverlay.classList.add('active');
     setTimeout(() => flashOverlay.classList.remove('active'), 100);
 
-    // Capture snapshot
     const dataUrl = camera.captureSnapshot();
     const activeFilterObj = PocketFilters.registry[camera.activeFilterId];
     const timestamp = new Date().toLocaleTimeString();
@@ -218,14 +212,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnShutter.addEventListener('click', triggerShutter);
 
-  btnSourceToggle.addEventListener('click', () => {
-    const src = camera.toggleSource();
-    btnSourceToggle.classList.toggle('pressed');
-    setTimeout(() => btnSourceToggle.classList.remove('pressed'), 200);
-    playBeepSound(700, 0.05);
-  });
+  if (btnSourceToggle) {
+    btnSourceToggle.addEventListener('click', () => {
+      const src = camera.toggleSource();
+      btnSourceToggle.classList.toggle('pressed');
+      setTimeout(() => btnSourceToggle.classList.remove('pressed'), 200);
+      playBeepSound(700, 0.05);
+    });
+  }
 
-  // D-Pad Filter Cycle
+  if (btnFlipCam) {
+    btnFlipCam.addEventListener('click', async () => {
+      const mode = await camera.toggleFacingMode();
+      if (lcdMode) lcdMode.textContent = mode === 'environment' ? 'BACK CAM' : 'FRONT CAM';
+      playBeepSound(750, 0.06);
+    });
+  }
+
   function nextFilter() {
     activeFilterIndex = (activeFilterIndex + 1) % filterList.length;
     selectFilterById(filterList[activeFilterIndex]);
@@ -241,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
   btnDpadUp.addEventListener('click', prevFilter);
   btnDpadDown.addEventListener('click', nextFilter);
 
-  // --- KEYBOARD SHORTCUTS ---
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
@@ -261,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- SETTINGS CONTROLS ---
   selectRes.addEventListener('change', (e) => {
     const [w, h] = e.target.value.split('x').map(Number);
     camera.setResolution(w, h);
@@ -278,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lcdScanlinesOverlay.classList.toggle('hidden', !e.target.checked);
   });
 
-  // --- SIDE PANEL C++ EXPORTER ---
   btnToggleCpp.addEventListener('click', () => {
     cppPanel.classList.toggle('hidden');
   });
@@ -293,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => btnCopyCode.textContent = 'Copy Code', 2000);
   });
 
-  // --- GALLERY MODAL HANDLERS ---
   function toggleGalleryModal() {
     galleryModal.classList.toggle('hidden');
     if (!galleryModal.classList.contains('hidden')) {
@@ -345,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- INITIAL START ---
   renderFilterOptions(currentCategory);
   selectFilterById('fuji_classic_chrome');
   syncParams();

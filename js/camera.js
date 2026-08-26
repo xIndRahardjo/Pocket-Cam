@@ -9,6 +9,8 @@ class PocketCamera {
     this.video = document.getElementById('webcam-video');
     
     this.currentSource = 'webcam'; // 'webcam' or 'sample'
+    this.facingMode = 'user'; // 'user' (front) or 'environment' (back)
+    this.mediaStream = null;
     this.sampleImg = null;
     
     this.activeFilterId = 'fuji_classic_chrome';
@@ -33,13 +35,11 @@ class PocketCamera {
   }
 
   initSampleImage() {
-    // Generate an animated synthetic retro test pattern canvas as sample source
     const sampleCanvas = document.createElement('canvas');
     sampleCanvas.width = 640;
     sampleCanvas.height = 480;
     const sCtx = sampleCanvas.getContext('2d');
 
-    // Draw gradient background
     const grad = sCtx.createLinearGradient(0, 0, 640, 480);
     grad.addColorStop(0, '#1e3c72');
     grad.addColorStop(0.5, '#2a5298');
@@ -47,7 +47,6 @@ class PocketCamera {
     sCtx.fillStyle = grad;
     sCtx.fillRect(0, 0, 640, 480);
 
-    // Draw retro shapes & text
     sCtx.fillStyle = '#f5a623';
     sCtx.beginPath();
     sCtx.arc(320, 240, 120, 0, Math.PI * 2);
@@ -64,13 +63,39 @@ class PocketCamera {
     this.sampleImg.src = sampleCanvas.toDataURL();
   }
 
-  async startWebcam() {
+  async stopMediaTracks() {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
+    }
+  }
+
+  async startWebcam(desiredFacingMode = null) {
+    if (desiredFacingMode) {
+      this.facingMode = desiredFacingMode;
+    }
+
+    await this.stopMediaTracks();
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+      // Try preferred facing mode first, fallback if unavailable
+      let constraints = {
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: { ideal: this.facingMode }
+        },
         audio: false
-      });
-      this.video.srcObject = stream;
+      };
+
+      try {
+        this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        console.warn(`Gagal membuka kamera mode ${this.facingMode}, mencoba fallback kamera standar:`, err);
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
+      this.video.srcObject = this.mediaStream;
       await this.video.play();
       this.currentSource = 'webcam';
       this.isStreaming = true;
@@ -85,11 +110,18 @@ class PocketCamera {
     }
   }
 
+  async toggleFacingMode() {
+    this.facingMode = (this.facingMode === 'user') ? 'environment' : 'user';
+    await this.startWebcam(this.facingMode);
+    return this.facingMode;
+  }
+
   toggleSource() {
     if (this.currentSource === 'webcam') {
+      this.stopMediaTracks();
       this.currentSource = 'sample';
     } else {
-      this.startWebcam();
+      this.startWebcam(this.facingMode);
     }
     return this.currentSource;
   }
@@ -126,7 +158,6 @@ class PocketCamera {
         this.lastFrameTime = timestamp - (elapsed % interval);
         this.renderFrame();
 
-        // Calculate actual FPS
         this.frameCount++;
         if (timestamp - this.fpsTimer >= 1000) {
           this.actualFps = this.frameCount;
@@ -148,20 +179,21 @@ class PocketCamera {
     const w = this.targetWidth;
     const h = this.targetHeight;
 
-    // Clear canvas
     this.ctx.clearRect(0, 0, w, h);
 
-    // Draw raw frame source onto canvas
     if (this.currentSource === 'webcam' && this.video.readyState >= 2) {
-      // Draw mirrored webcam
       this.ctx.save();
-      this.ctx.scale(-1, 1);
-      this.ctx.drawImage(this.video, -w, 0, w, h);
+      // Mirror canvas ONLY for front camera ('user'), do not mirror back camera ('environment')
+      if (this.facingMode === 'user') {
+        this.ctx.scale(-1, 1);
+        this.ctx.drawImage(this.video, -w, 0, w, h);
+      } else {
+        this.ctx.drawImage(this.video, 0, 0, w, h);
+      }
       this.ctx.restore();
     } else if (this.sampleImg && this.sampleImg.complete) {
       this.ctx.drawImage(this.sampleImg, 0, 0, w, h);
     } else {
-      // Fallback color box
       this.ctx.fillStyle = '#111';
       this.ctx.fillRect(0, 0, w, h);
       this.ctx.fillStyle = '#f5a623';
@@ -169,7 +201,6 @@ class PocketCamera {
       return;
     }
 
-    // Apply Active Filter Engine
     const filterObj = PocketFilters.registry[this.activeFilterId];
     if (filterObj && filterObj.apply) {
       filterObj.apply(this.ctx, w, h, this.filterParams);
@@ -177,7 +208,6 @@ class PocketCamera {
   }
 
   captureSnapshot() {
-    // Return data URL of current canvas view
     return this.canvas.toDataURL('image/png');
   }
 }
