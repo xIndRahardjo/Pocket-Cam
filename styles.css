@@ -195,19 +195,19 @@ html, body {
   display: none;
 }
 
-/* Flash animation */
+/* Flash animation (Full Screen Bright White Flash) */
 .flash-overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: white;
+  background: #ffffff;
   opacity: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 99999;
   transition: opacity 0.05s ease-out;
 }
 
 .flash-overlay.active {
-  opacity: 0.95;
+  opacity: 1;
 }
 
 /* Active Filter Overlay Badge */

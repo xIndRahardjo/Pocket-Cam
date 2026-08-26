@@ -101,7 +101,8 @@ class PocketCamera {
       this.currentSource = 'webcam';
       this.isStreaming = true;
       
-      await this.applyTorchState();
+      // Auto re-bind hardware torch senter for back camera
+      await this.setTorchState(this.flashMode === 'on');
 
       this.startRenderLoop();
       return true;
@@ -124,7 +125,7 @@ class PocketCamera {
     const modes = ['off', 'on', 'auto'];
     const nextIdx = (modes.indexOf(this.flashMode) + 1) % modes.length;
     this.flashMode = modes[nextIdx];
-    await this.applyTorchState();
+    await this.setTorchState(this.flashMode === 'on');
     return this.flashMode;
   }
 
@@ -133,28 +134,29 @@ class PocketCamera {
     return this.showDateStamp;
   }
 
-  async applyTorchState(forceTorchState = null) {
-    if (!this.mediaStream) return;
+  async setTorchState(enable) {
+    if (!this.mediaStream) return false;
     const track = this.mediaStream.getVideoTracks()[0];
-    if (!track) return;
-
-    const shouldEnable = (forceTorchState !== null) ? forceTorchState : (this.flashMode === 'on');
+    if (!track) return false;
 
     try {
       const capabilities = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
       const settings = (typeof track.getSettings === 'function') ? track.getSettings() : {};
 
-      if (capabilities.torch || 'torch' in settings || 'torch' in track.getConstraints()) {
+      if (capabilities.torch || 'torch' in settings || ('getConstraints' in track && 'torch' in track.getConstraints())) {
         await track.applyConstraints({
-          advanced: [{ torch: shouldEnable }]
+          advanced: [{ torch: !!enable }]
         });
+        return true;
       }
     } catch (err) {
-      console.warn('Tidak dapat mengubah status torch/senter HP:', err);
+      console.warn('Lampu senter hardware (torch) tidak didukung browser ini:', err);
     }
+    return false;
   }
 
   async pulseFlashlight() {
+    // Pulse physical flash for 400ms on shutter press (Android Chrome back camera)
     if (!this.mediaStream) return;
     const track = this.mediaStream.getVideoTracks()[0];
     if (!track) return;
@@ -165,9 +167,9 @@ class PocketCamera {
         if (this.flashMode !== 'on') {
           await track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
         }
-      }, 350);
+      }, 400);
     } catch (e) {
-      // Torch constraint not supported
+      // Torch constraint fallback
     }
   }
 
