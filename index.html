@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pocket Camera Web App (Fujifilm & Retro Filters)</title>
   <meta name="description" content="Aplikasi Kamera Smartphone Web dengan Simulasi Film Fujifilm, Game Boy Camera, 3DS Digicam, dan C++ Exporter.">
-  <link rel="stylesheet" href="styles.css?v=2.5.1">
+  <link rel="stylesheet" href="styles.css?v=2.6.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
         <div class="status-pill">
           <span id="lcd-status-fps">30 FPS</span>
           <span class="dot">•</span>
-          <span id="lcd-res-indicator">320x240</span>
+          <span id="lcd-res-indicator">Native HD</span>
         </div>
       </div>
 
@@ -50,7 +50,7 @@
     <main class="viewfinder-section">
       <div class="viewfinder-container">
         <!-- Live Viewfinder Canvas -->
-        <canvas id="viewfinder-canvas" width="320" height="240"></canvas>
+        <canvas id="viewfinder-canvas" width="1280" height="720"></canvas>
         <video id="webcam-video" autoplay playsinline muted style="display: none;"></video>
         
         <!-- LCD Overlay Scanlines -->
@@ -139,12 +139,14 @@
             <h4>Resolusi & Tampilan Hardware</h4>
             <div class="settings-row">
               <div class="setting-field">
-                <label for="select-resolution">Resolusi LCD Target:</label>
+                <label for="select-resolution">Resolusi Tampilan Kamera:</label>
                 <select id="select-resolution" class="select-input">
-                  <option value="320x240" selected>QVGA (320 x 240)</option>
-                  <option value="240x240">Square LCD (240 x 240)</option>
-                  <option value="160x120">QQVGA (160 x 120)</option>
-                  <option value="128x112">Game Boy (128 x 112)</option>
+                  <option value="auto" selected>✨ Native HD (Auto Device Res)</option>
+                  <option value="1920x1080">Full HD (1920 x 1080)</option>
+                  <option value="1280x720">HD (1280 x 720)</option>
+                  <option value="640x480">VGA High (640 x 480)</option>
+                  <option value="320x240">QVGA Retro (320 x 240)</option>
+                  <option value="128x112">Game Boy Lo-Fi (128 x 112)</option>
                 </select>
               </div>
               <div class="setting-field">

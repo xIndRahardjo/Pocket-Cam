@@ -121,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveStorage() {
     try {
-      // Limit saved photos to last 20 to avoid exceeding localStorage quota limits
       const toSave = capturedPhotos.slice(0, 20);
       localStorage.setItem('pocket_cam_photos_v1', JSON.stringify(toSave));
     } catch (e) {
@@ -162,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
       playBeepSound(900, 0.05);
     } catch (err) {
       console.warn('Blob download fallback:', err);
-      // Fallback for strict mobile webviews
       const win = window.open();
       if (win) {
         win.document.write(`<title>${filename}</title><img src="${dataUrl}" style="max-width:100%;">`);
@@ -342,9 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   selectRes.addEventListener('change', (e) => {
-    const [w, h] = e.target.value.split('x').map(Number);
-    camera.setResolution(w, h);
-    lcdResIndicator.textContent = `${w}x${h}`;
+    if (e.target.value === 'auto') {
+      camera.setResolution('auto', 'auto');
+      lcdResIndicator.textContent = 'Native HD';
+    } else {
+      const [w, h] = e.target.value.split('x').map(Number);
+      camera.setResolution(w, h);
+      lcdResIndicator.textContent = `${w}x${h}`;
+    }
     playBeepSound(650, 0.04);
   });
 
@@ -399,12 +402,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // Download Listener (Blob Based)
       item.querySelector('.dl-btn').addEventListener('click', () => {
         downloadPhoto(photo.dataUrl, `pocket_cam_${photo.filterName.replace(/\s+/g, '_')}_${photo.id}.png`);
       });
 
-      // View Full Image Listener
       item.querySelector('.view-btn').addEventListener('click', () => {
         const win = window.open();
         if (win) {
@@ -419,7 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Delete Listener
       item.querySelector('.del-btn').addEventListener('click', () => {
         capturedPhotos = capturedPhotos.filter(p => p.id !== photo.id);
         saveStorage();

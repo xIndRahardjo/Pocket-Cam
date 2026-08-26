@@ -14,6 +14,7 @@ class PocketCamera {
     this.sampleImg = null;
     this.flashMode = 'off'; // 'off', 'on', 'auto'
     this.showDateStamp = true; // Retro Digicam Date Stamp ON/OFF
+    this.isNativeRes = true; // Auto Native High Resolution Mode
     
     this.activeFilterId = 'fuji_classic_chrome';
     this.filterParams = {
@@ -23,8 +24,8 @@ class PocketCamera {
       dither: 50
     };
 
-    this.targetWidth = 320;
-    this.targetHeight = 240;
+    this.targetWidth = 1280;
+    this.targetHeight = 720;
     this.simFps = 30;
 
     this.isStreaming = false;
@@ -38,28 +39,28 @@ class PocketCamera {
 
   initSampleImage() {
     const sampleCanvas = document.createElement('canvas');
-    sampleCanvas.width = 640;
-    sampleCanvas.height = 480;
+    sampleCanvas.width = 1280;
+    sampleCanvas.height = 720;
     const sCtx = sampleCanvas.getContext('2d');
 
-    const grad = sCtx.createLinearGradient(0, 0, 640, 480);
+    const grad = sCtx.createLinearGradient(0, 0, 1280, 720);
     grad.addColorStop(0, '#1e3c72');
     grad.addColorStop(0.5, '#2a5298');
     grad.addColorStop(1, '#f12711');
     sCtx.fillStyle = grad;
-    sCtx.fillRect(0, 0, 640, 480);
+    sCtx.fillRect(0, 0, 1280, 720);
 
     sCtx.fillStyle = '#f5a623';
     sCtx.beginPath();
-    sCtx.arc(320, 240, 120, 0, Math.PI * 2);
+    sCtx.arc(640, 360, 200, 0, Math.PI * 2);
     sCtx.fill();
 
     sCtx.fillStyle = '#ffffff';
-    sCtx.font = 'bold 36px sans-serif';
+    sCtx.font = 'bold 54px sans-serif';
     sCtx.textAlign = 'center';
-    sCtx.fillText('POCKET-CAM TEST', 320, 230);
-    sCtx.font = '20px sans-serif';
-    sCtx.fillText('ESP32-CAM Simulator', 320, 270);
+    sCtx.fillText('POCKET-CAM NATIVE HD', 640, 350);
+    sCtx.font = '28px sans-serif';
+    sCtx.fillText('High Definition Camera Simulator', 640, 400);
 
     this.sampleImg = new Image();
     this.sampleImg.src = sampleCanvas.toDataURL();
@@ -80,10 +81,11 @@ class PocketCamera {
     await this.stopMediaTracks();
 
     try {
+      // Request maximum native resolution from device camera
       let constraints = {
         video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          width: { ideal: 1920, max: 3840 },
+          height: { ideal: 1080, max: 2160 },
           facingMode: { ideal: this.facingMode }
         },
         audio: false
@@ -156,7 +158,6 @@ class PocketCamera {
   }
 
   async pulseFlashlight() {
-    // Pulse physical flash for 400ms on shutter press (Android Chrome back camera)
     if (!this.mediaStream) return;
     const track = this.mediaStream.getVideoTracks()[0];
     if (!track) return;
@@ -174,10 +175,15 @@ class PocketCamera {
   }
 
   setResolution(width, height) {
-    this.targetWidth = width;
-    this.targetHeight = height;
-    this.canvas.width = width;
-    this.canvas.height = height;
+    if (width === 'auto' || width === 0) {
+      this.isNativeRes = true;
+    } else {
+      this.isNativeRes = false;
+      this.targetWidth = width;
+      this.targetHeight = height;
+      this.canvas.width = width;
+      this.canvas.height = height;
+    }
   }
 
   setTargetFps(fps) {
@@ -223,6 +229,24 @@ class PocketCamera {
   }
 
   renderFrame() {
+    // If Native High Resolution Mode is enabled, automatically adapt canvas size to native camera track resolution
+    if (this.currentSource === 'webcam' && this.video.readyState >= 2) {
+      const vw = this.video.videoWidth;
+      const vh = this.video.videoHeight;
+
+      if (this.isNativeRes && vw > 0 && vh > 0) {
+        if (this.targetWidth !== vw || this.targetHeight !== vh) {
+          this.targetWidth = vw;
+          this.targetHeight = vh;
+          this.canvas.width = vw;
+          this.canvas.height = vh;
+
+          const resElem = document.getElementById('lcd-res-indicator');
+          if (resElem) resElem.textContent = `${vw}x${vh}`;
+        }
+      }
+    }
+
     const w = this.targetWidth;
     const h = this.targetHeight;
 
@@ -277,14 +301,16 @@ class PocketCamera {
       const dd = String(now.getDate()).padStart(2, '0');
       const dateStr = `'${yy} ${mm} ${dd}`;
 
-      this.ctx.font = 'bold 11px "Press Start 2P", monospace';
+      // Scaled font size relative to canvas width for high resolution crispness
+      const fontSize = Math.max(11, Math.round(w / 35));
+      this.ctx.font = `bold ${fontSize}px "Press Start 2P", monospace`;
       this.ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-      this.ctx.shadowOffsetX = 1;
-      this.ctx.shadowOffsetY = 1;
-      this.ctx.shadowBlur = 3;
+      this.ctx.shadowOffsetX = 2;
+      this.ctx.shadowOffsetY = 2;
+      this.ctx.shadowBlur = 4;
       this.ctx.fillStyle = '#ff6c00'; // Classic 90s digicam orange
       this.ctx.textAlign = 'right';
-      this.ctx.fillText(dateStr, w - 8, h - 8);
+      this.ctx.fillText(dateStr, w - (w * 0.025), h - (h * 0.035));
       this.ctx.restore();
     }
   }
