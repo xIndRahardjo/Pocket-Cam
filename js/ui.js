@@ -1,47 +1,24 @@
 /**
- * Pocket Camera UI Controller & Interactivity
+ * Modern Smartphone Camera App UI Controller
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   const camera = new PocketCamera();
 
   // Elements
-  const filterContainer = document.getElementById('filter-options-container');
-  const tabBtns = document.querySelectorAll('.tab-btn');
+  const categoryDropdown = document.getElementById('category-dropdown');
+  const filterSliderContainer = document.getElementById('filter-slider-container');
   const lcdFilterName = document.getElementById('lcd-filter-name');
   const lcdResIndicator = document.getElementById('lcd-res-indicator');
-  const lcdSdStatus = document.getElementById('lcd-sd-status');
-  const lcdMode = document.getElementById('lcd-mode');
-  
-  // Sliders
-  const sliderGrain = document.getElementById('slider-grain');
-  const sliderContrast = document.getElementById('slider-contrast');
-  const sliderVignette = document.getElementById('slider-vignette');
-  const sliderDither = document.getElementById('slider-dither');
-  
-  const valGrain = document.getElementById('val-grain');
-  const valContrast = document.getElementById('val-contrast');
-  const valVignette = document.getElementById('val-vignette');
-  const valDither = document.getElementById('val-dither');
-
-  // Hardware Controls
-  const btnShutter = document.getElementById('btn-shutter');
-  const btnGallery = document.getElementById('btn-gallery');
-  const btnSourceToggle = document.getElementById('btn-source-toggle');
-  const btnFlipCam = document.getElementById('btn-flip-cam');
-  const btnDpadLeft = document.getElementById('btn-dpad-left');
-  const btnDpadRight = document.getElementById('btn-dpad-right');
-  const btnDpadUp = document.getElementById('btn-dpad-up');
-  const btnDpadDown = document.getElementById('btn-dpad-down');
-
-  // Settings
-  const selectRes = document.getElementById('select-resolution');
-  const selectFps = document.getElementById('select-sim-fps');
-  const checkLcdLines = document.getElementById('check-lcd-lines');
-  const lcdScanlinesOverlay = document.getElementById('lcd-scanline-overlay');
+  const lcdStatusFps = document.getElementById('lcd-status-fps');
   const flashOverlay = document.getElementById('flash-overlay');
 
-  // Side Panel C++ Exporter
+  // Top Bar & Drawer
+  const btnOpenSettings = document.getElementById('btn-open-settings');
+  const btnCloseSettings = document.getElementById('btn-close-settings');
+  const settingsDrawer = document.getElementById('settings-drawer');
+
+  // C++ Code Panel
   const btnToggleCpp = document.getElementById('btn-toggle-cpp');
   const btnCloseCpp = document.getElementById('btn-close-cpp');
   const cppPanel = document.getElementById('cpp-exporter-panel');
@@ -49,7 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const cppCodeBlock = document.getElementById('cpp-code-block');
   const btnCopyCode = document.getElementById('btn-copy-code');
 
-  // Gallery Modal
+  // Shutter & Camera Controls
+  const btnShutter = document.getElementById('btn-shutter');
+  const btnFlipCam = document.getElementById('btn-flip-cam');
+  const btnSourceToggle = document.getElementById('btn-source-toggle');
+
+  // Gallery Controls
+  const btnGallery = document.getElementById('btn-gallery');
+  const galleryThumbPreview = document.getElementById('gallery-thumb-preview');
   const galleryModal = document.getElementById('gallery-modal');
   const btnCloseGallery = document.getElementById('btn-close-gallery');
   const btnCloseGalleryFooter = document.getElementById('btn-close-gallery-footer');
@@ -57,13 +41,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const galleryGrid = document.getElementById('gallery-grid');
   const galleryCount = document.getElementById('gallery-count');
 
+  // Sliders & Settings
+  const sliderGrain = document.getElementById('slider-grain');
+  const sliderContrast = document.getElementById('slider-contrast');
+  const sliderVignette = document.getElementById('slider-vignette');
+  const sliderDither = document.getElementById('slider-dither');
+  const valGrain = document.getElementById('val-grain');
+  const valContrast = document.getElementById('val-contrast');
+  const valVignette = document.getElementById('val-vignette');
+  const valDither = document.getElementById('val-dither');
+
+  const selectRes = document.getElementById('select-resolution');
+  const selectFps = document.getElementById('select-sim-fps');
+  const checkLcdLines = document.getElementById('check-lcd-lines');
+  const lcdScanlinesOverlay = document.getElementById('lcd-scanline-overlay');
+
   // Internal State
   let capturedPhotos = [];
-  let currentCategory = 'fujifilm';
   let filterList = Object.keys(PocketFilters.registry);
   let activeFilterIndex = 0;
 
-  // Initialize Web Audio API Synth for Beeps and Shutter Click
+  // Web Audio Synth for Shutter Click & Beeps
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   function playBeepSound(freq = 600, duration = 0.05) {
@@ -72,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gain = audioCtx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -107,25 +105,23 @@ document.addEventListener('DOMContentLoaded', () => {
     whiteNoise.start();
   }
 
-  function renderFilterOptions(category) {
-    filterContainer.innerHTML = '';
+  // --- POPULATE HORIZONTAL FILTER SLIDER CAROUSEL ---
+  function renderFilterSlider(category) {
+    filterSliderContainer.innerHTML = '';
     
     Object.entries(PocketFilters.registry).forEach(([id, filter]) => {
       if (category === 'all' || filter.category === category) {
-        const card = document.createElement('div');
-        card.className = `filter-card ${id === camera.activeFilterId ? 'active' : ''}`;
-        card.dataset.id = id;
-        
-        card.innerHTML = `
-          <div class="filter-title">${filter.name}</div>
-          <div class="filter-desc">${filter.description}</div>
-        `;
+        const pill = document.createElement('button');
+        pill.className = `filter-pill ${id === camera.activeFilterId ? 'active' : ''}`;
+        pill.dataset.id = id;
+        pill.textContent = filter.name;
 
-        card.addEventListener('click', () => {
+        pill.addEventListener('click', () => {
           selectFilterById(id);
+          pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
 
-        filterContainer.appendChild(card);
+        filterSliderContainer.appendChild(pill);
       }
     });
   }
@@ -138,10 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterObj) {
       lcdFilterName.textContent = filterObj.name.toUpperCase();
       cppActiveFilterName.textContent = filterObj.name;
+
+      // Auto switch category dropdown if selected filter belongs to another category
+      if (categoryDropdown.value !== filterObj.category && categoryDropdown.value !== 'all') {
+        categoryDropdown.value = filterObj.category;
+        renderFilterSlider(filterObj.category);
+      }
     }
 
-    document.querySelectorAll('.filter-card').forEach(card => {
-      card.classList.toggle('active', card.dataset.id === filterId);
+    // Highlight active pill
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.id === filterId);
     });
 
     updateCppExporterCode();
@@ -153,16 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
     cppCodeBlock.textContent = code;
   }
 
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      currentCategory = e.target.dataset.category;
-      renderFilterOptions(currentCategory);
-      playBeepSound(500, 0.03);
-    });
+  // Dropdown Category Change Listener
+  categoryDropdown.addEventListener('change', (e) => {
+    renderFilterSlider(e.target.value);
+    playBeepSound(500, 0.03);
   });
 
+  // Slider Params Sync
   function syncParams() {
     const params = {
       grain: parseInt(sliderGrain.value, 10),
@@ -183,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     s.addEventListener('input', syncParams);
   });
 
+  // --- SHUTTER & PHOTO CAPTURE ---
   function triggerShutter() {
     playShutterSound();
 
@@ -202,65 +203,40 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     capturedPhotos.unshift(photo);
-    updateSdStatus();
+    updateGalleryPreview();
   }
 
-  function updateSdStatus() {
-    lcdSdStatus.textContent = `SD: OK [${capturedPhotos.length}/99]`;
+  function updateGalleryPreview() {
     galleryCount.textContent = capturedPhotos.length;
+    if (capturedPhotos.length > 0) {
+      galleryThumbPreview.classList.remove('empty');
+      galleryThumbPreview.innerHTML = `<img src="${capturedPhotos[0].dataUrl}" alt="Thumb">`;
+    } else {
+      galleryThumbPreview.classList.add('empty');
+      galleryThumbPreview.innerHTML = `<span>📷</span>`;
+    }
   }
 
   btnShutter.addEventListener('click', triggerShutter);
 
-  if (btnSourceToggle) {
-    btnSourceToggle.addEventListener('click', () => {
-      const src = camera.toggleSource();
-      btnSourceToggle.classList.toggle('pressed');
-      setTimeout(() => btnSourceToggle.classList.remove('pressed'), 200);
-      playBeepSound(700, 0.05);
-    });
-  }
+  // Camera Flip & Source Toggle
+  btnFlipCam.addEventListener('click', async () => {
+    await camera.toggleFacingMode();
+    playBeepSound(750, 0.06);
+  });
 
-  if (btnFlipCam) {
-    btnFlipCam.addEventListener('click', async () => {
-      const mode = await camera.toggleFacingMode();
-      if (lcdMode) lcdMode.textContent = mode === 'environment' ? 'BACK CAM' : 'FRONT CAM';
-      playBeepSound(750, 0.06);
-    });
-  }
+  btnSourceToggle.addEventListener('click', () => {
+    camera.toggleSource();
+    playBeepSound(700, 0.05);
+  });
 
-  function nextFilter() {
-    activeFilterIndex = (activeFilterIndex + 1) % filterList.length;
-    selectFilterById(filterList[activeFilterIndex]);
-  }
+  // Settings Drawer Event Handlers
+  btnOpenSettings.addEventListener('click', () => {
+    settingsDrawer.classList.remove('hidden');
+  });
 
-  function prevFilter() {
-    activeFilterIndex = (activeFilterIndex - 1 + filterList.length) % filterList.length;
-    selectFilterById(filterList[activeFilterIndex]);
-  }
-
-  btnDpadRight.addEventListener('click', nextFilter);
-  btnDpadLeft.addEventListener('click', prevFilter);
-  btnDpadUp.addEventListener('click', prevFilter);
-  btnDpadDown.addEventListener('click', nextFilter);
-
-  document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
-    if (e.code === 'Space') {
-      e.preventDefault();
-      triggerShutter();
-    } else if (e.code === 'ArrowRight' || e.code === 'ArrowDown') {
-      e.preventDefault();
-      nextFilter();
-    } else if (e.code === 'ArrowLeft' || e.code === 'ArrowUp') {
-      e.preventDefault();
-      prevFilter();
-    } else if (e.key.toLowerCase() === 'g') {
-      toggleGalleryModal();
-    } else if (e.key.toLowerCase() === 'c') {
-      cppPanel.classList.toggle('hidden');
-    }
+  btnCloseSettings.addEventListener('click', () => {
+    settingsDrawer.classList.add('hidden');
   });
 
   selectRes.addEventListener('change', (e) => {
@@ -279,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lcdScanlinesOverlay.classList.toggle('hidden', !e.target.checked);
   });
 
+  // Side Panel C++ Exporter
   btnToggleCpp.addEventListener('click', () => {
     cppPanel.classList.toggle('hidden');
   });
@@ -293,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => btnCopyCode.textContent = 'Copy Code', 2000);
   });
 
+  // Modal Gallery
   function toggleGalleryModal() {
     galleryModal.classList.toggle('hidden');
     if (!galleryModal.classList.contains('hidden')) {
@@ -302,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderGallery() {
     if (capturedPhotos.length === 0) {
-      galleryGrid.innerHTML = '<p class="empty-msg">Belum ada foto yang diambil. Gunakan tombol Shutter untuk mengambil foto!</p>';
+      galleryGrid.innerHTML = '<p class="empty-msg">Belum ada foto yang diambil. Klik tombol Shutter putih untuk jepret foto!</p>';
       return;
     }
 
@@ -324,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       item.querySelector('.del-btn').addEventListener('click', () => {
         capturedPhotos = capturedPhotos.filter(p => p.id !== photo.id);
-        updateSdStatus();
+        updateGalleryPreview();
         renderGallery();
       });
 
@@ -339,12 +317,13 @@ document.addEventListener('DOMContentLoaded', () => {
   btnClearGallery.addEventListener('click', () => {
     if (confirm('Apakah Anda yakin ingin menghapus semua foto di galeri?')) {
       capturedPhotos = [];
-      updateSdStatus();
+      updateGalleryPreview();
       renderGallery();
     }
   });
 
-  renderFilterOptions(currentCategory);
+  // Initial Setup
+  renderFilterSlider('fujifilm');
   selectFilterById('fuji_classic_chrome');
   syncParams();
   camera.startWebcam();
