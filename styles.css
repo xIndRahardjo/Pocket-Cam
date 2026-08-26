@@ -133,7 +133,7 @@ html, body {
 }
 
 /* ==========================================
- * MAIN VIEWFINDER SECTION (FULL COVER FILL)
+ * MAIN VIEWFINDER SECTION (UNCROPPED 100% FRAME)
  * ========================================== */
 
 .viewfinder-section {
@@ -159,13 +159,13 @@ html, body {
   overflow: hidden;
 }
 
-/* OBJECT FIT COVER FILLED NO BLACK BARS */
+/* OBJECT FIT CONTAIN PRESERVES 100% UNCROPPED CAMERA FRAME */
 #viewfinder-canvas {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  object-fit: cover !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
   display: block !important;
   image-rendering: pixelated;
 }
@@ -205,12 +205,12 @@ html, body {
 /* Active Filter Overlay Badge */
 .active-filter-badge {
   position: absolute;
-  bottom: 14px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.75);
   border: 1.5px solid var(--accent-gold);
-  padding: 0.4rem 1.1rem;
+  padding: 0.35rem 1rem;
   border-radius: 20px;
   backdrop-filter: blur(12px);
   z-index: 4;
@@ -219,24 +219,24 @@ html, body {
 
 #lcd-filter-name {
   color: var(--accent-gold);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 /* ==========================================
- * BOTTOM CONTROLS BAR (LARGER TACTILE BUTTONS)
+ * BOTTOM CONTROLS BAR (PROMINENT TACTILE BUTTONS)
  * ========================================== */
 
 .bottom-controls {
   flex-shrink: 0;
   background: var(--bg-panel);
   border-top: 1px solid var(--border-color);
-  padding: 0.6rem 0.8rem 1.2rem;
+  padding: 0.5rem 0.8rem 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   z-index: 10;
   width: 100%;
 }
@@ -252,10 +252,10 @@ html, body {
   background: var(--bg-card);
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  padding: 0.45rem 1rem;
+  padding: 0.4rem 0.9rem;
   border-radius: 20px;
   font-family: var(--font-main);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   outline: none;
   cursor: pointer;
@@ -272,9 +272,9 @@ html, body {
 /* 2. Horizontal Filter Slider Carousel */
 .filter-slider-container {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.45rem;
   overflow-x: auto;
-  padding: 0.2rem 0;
+  padding: 0.15rem 0;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   width: 100%;
@@ -288,9 +288,9 @@ html, body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  padding: 0.45rem 0.95rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 18px;
+  font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -308,8 +308,8 @@ html, body {
   color: #000;
   border-color: var(--accent-gold);
   font-weight: 700;
-  box-shadow: 0 0 14px rgba(245, 166, 35, 0.45);
-  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(245, 166, 35, 0.45);
+  transform: scale(1.04);
 }
 
 /* 3. Primary Shutter Row (iPhone / Android Camera Style) */
@@ -318,7 +318,7 @@ html, body {
   justify-content: space-around;
   align-items: center;
   width: 100%;
-  padding-top: 0.2rem;
+  padding-top: 0.1rem;
 }
 
 /* Gallery Thumbnail Button */
@@ -356,7 +356,7 @@ html, body {
   transform: scale(0.9);
 }
 
-/* Big Round Shutter Button (72px) */
+/* Big Round Shutter Button (72px Desktop / 68px Mobile) */
 .main-shutter-btn {
   width: 72px;
   height: 72px;
@@ -743,60 +743,60 @@ pre code {
 
 @media (max-width: 600px) {
   .top-bar {
-    padding: 0.6rem 0.75rem !important;
+    padding: 0.5rem 0.65rem !important;
   }
 
   .status-pill {
     font-size: 0.65rem !important;
-    padding: 0.28rem 0.5rem !important;
+    padding: 0.25rem 0.45rem !important;
   }
 
   .icon-btn {
     width: 36px !important;
     height: 36px !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
   }
 
   .pill-btn {
-    padding: 0.35rem 0.6rem !important;
-    font-size: 0.7rem !important;
+    padding: 0.32rem 0.55rem !important;
+    font-size: 0.68rem !important;
   }
 
   .bottom-controls {
-    padding: 0.5rem 0.75rem 1rem !important;
-    gap: 0.5rem !important;
+    padding: 0.45rem 0.65rem 0.95rem !important;
+    gap: 0.45rem !important;
   }
 
   .category-dropdown {
-    padding: 0.4rem 0.8rem !important;
-    font-size: 0.78rem !important;
+    padding: 0.38rem 0.75rem !important;
+    font-size: 0.76rem !important;
   }
 
   .filter-slider-container {
-    padding: 0.15rem 0 !important;
-    gap: 0.4rem !important;
+    padding: 0.1rem 0 !important;
+    gap: 0.35rem !important;
   }
 
   .filter-pill {
-    padding: 0.4rem 0.8rem !important;
-    font-size: 0.75rem !important;
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.74rem !important;
   }
 
   .shutter-row {
-    padding-top: 0.15rem !important;
+    padding-top: 0.1rem !important;
   }
 
   /* LARGER 68px SHUTTER BUTTON ON MOBILE */
   .main-shutter-btn {
     width: 68px !important;
     height: 68px !important;
-    border-width: 4px !important;
+    border-width: 3.5px !important;
   }
 
   .thumb-preview {
     width: 44px !important;
     height: 44px !important;
-    border-radius: 11px !important;
+    border-radius: 10px !important;
   }
 
   .flip-cam-btn {
