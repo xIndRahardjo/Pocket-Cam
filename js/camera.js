@@ -1,6 +1,6 @@
 /**
  * Pocket Camera Stream & Render Controller
- * Dual-Pipeline Architecture + Native Smartphone Hardware Torch Control
+ * Dual-Pipeline Architecture + 4-Method Smartphone Hardware Torch Control
  */
 
 class PocketCamera {
@@ -93,7 +93,6 @@ class PocketCamera {
         facingMode: { ideal: this.facingMode }
       };
 
-      // Try searching exact back camera device for torch support
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(d => d.kind === 'videoinput');
@@ -109,7 +108,7 @@ class PocketCamera {
           }
         }
       } catch (e) {
-        // Enumerate devices fallback
+        // Fallback
       }
 
       try {
@@ -127,7 +126,6 @@ class PocketCamera {
       this.currentSource = 'webcam';
       this.isStreaming = true;
       
-      // Auto re-apply torch state if flash mode was ON
       if (this.flashMode === 'on') {
         await this.enableHardwareTorch(true);
       }
@@ -164,8 +162,11 @@ class PocketCamera {
   }
 
   /**
-   * Directly triggers physical smartphone LED flashlight (torch) via WebRTC track constraints.
-   * Must be called within a user gesture event listener (tap/click) for mobile security compliance.
+   * 4-Method Comprehensive Hardware Torch Enabler
+   * Method 1: ImageCapture W3C API
+   * Method 2: Advanced Track Constraint [{ torch: true }]
+   * Method 3: fillLightMode Constraint
+   * Method 4: Dynamic Re-acquisition with torch constraint
    */
   async enableHardwareTorch(enable) {
     if (!this.mediaStream) return false;
@@ -174,43 +175,70 @@ class PocketCamera {
     
     const track = tracks[0];
 
-    // Method 1: Advanced constraint array with torch
+    // Method 1: ImageCapture W3C Native API
+    if (window.ImageCapture) {
+      try {
+        const imageCapture = new ImageCapture(track);
+        if (imageCapture.setOptions) {
+          await imageCapture.setOptions({
+            fillLightMode: enable ? 'torch' : 'off'
+          });
+          console.log('Torch via ImageCapture.setOptions succeeded!');
+          return true;
+        }
+      } catch (e) {
+        console.warn('ImageCapture setOptions attempt failed:', e);
+      }
+    }
+
+    // Method 2: Advanced Track Constraint [{ torch: true }]
     try {
       await track.applyConstraints({
         advanced: [{ torch: !!enable }]
       });
-      console.log('Torch LED hardware berhasil diubah:', enable);
+      console.log('Torch via applyConstraints advanced torch succeeded!');
       return true;
     } catch (err1) {
-      console.warn('Torch constraint v1 gagal:', err1);
+      console.warn('Torch constraint v1 failed:', err1);
     }
 
-    // Method 2: Fill light mode fallback for some Android devices
+    // Method 3: Fill Light Mode Constraint
     try {
       await track.applyConstraints({
         advanced: [{ torch: !!enable }, { fillLightMode: enable ? 'flash' : 'off' }]
       });
+      console.log('Torch via fillLightMode succeeded!');
       return true;
     } catch (err2) {
-      console.warn('Torch constraint v2 (fillLightMode) gagal:', err2);
+      console.warn('Torch constraint v2 failed:', err2);
     }
 
-    // Method 3: Direct capability check
-    try {
-      const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
-      if ('torch' in caps) {
-        await track.applyConstraints({ torch: !!enable });
-        return true;
+    // Method 4: Dynamic getUserMedia re-acquisition with torch
+    if (enable && this.facingMode === 'environment') {
+      try {
+        const torchStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            advanced: [{ torch: true }]
+          },
+          audio: false
+        });
+        if (torchStream) {
+          this.mediaStream = torchStream;
+          this.video.srcObject = torchStream;
+          await this.video.play();
+          console.log('Torch via stream re-acquisition succeeded!');
+          return true;
+        }
+      } catch (err4) {
+        console.warn('Stream re-acquisition with torch failed:', err4);
       }
-    } catch (err3) {
-      console.warn('Torch constraint v3 gagal:', err3);
     }
 
     return false;
   }
 
   async pulseFlashlight() {
-    // Pulse physical flash for 450ms on shutter press (Android Chrome back camera)
     if (!this.mediaStream) return;
     const tracks = this.mediaStream.getVideoTracks();
     if (!tracks || tracks.length === 0) return;
