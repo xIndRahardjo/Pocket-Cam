@@ -13,12 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const lcdStatusFps = document.getElementById('lcd-status-fps');
   const flashOverlay = document.getElementById('flash-overlay');
 
-  // Top Bar & Drawer
+  // Top Bar & Quick Front Controls
   const btnOpenSettings = document.getElementById('btn-open-settings');
   const btnCloseSettings = document.getElementById('btn-close-settings');
   const settingsDrawer = document.getElementById('settings-drawer');
   const btnFlashToggle = document.getElementById('btn-flash-toggle');
   const flashIconLabel = document.getElementById('flash-icon-label');
+  const btnScanlineToggle = document.getElementById('btn-scanline-toggle');
+  const btnDateToggle = document.getElementById('btn-date-toggle');
 
   // C++ Code Panel
   const btnToggleCpp = document.getElementById('btn-toggle-cpp');
@@ -185,11 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
     playShutterSound();
 
     if (camera.flashMode === 'on' || camera.flashMode === 'auto') {
-      // 1. Screen Flash overlay pulse
       flashOverlay.classList.add('active');
       setTimeout(() => flashOverlay.classList.remove('active'), 250);
-
-      // 2. Hardware LED Torch pulse (for back camera flashlight on Android)
       camera.pulseFlashlight();
     }
 
@@ -221,6 +220,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnShutter.addEventListener('click', triggerShutter);
+
+  // Quick Front Toggle: Scanline LCD Overlay
+  function toggleScanlines(enable) {
+    const isScanlineOn = (enable !== undefined) ? enable : lcdScanlinesOverlay.classList.contains('hidden');
+    lcdScanlinesOverlay.classList.toggle('hidden', !isScanlineOn);
+    checkLcdLines.checked = isScanlineOn;
+    btnScanlineToggle.classList.toggle('active', isScanlineOn);
+  }
+
+  btnScanlineToggle.addEventListener('click', () => {
+    toggleScanlines();
+    playBeepSound(650, 0.04);
+  });
+
+  checkLcdLines.addEventListener('change', (e) => {
+    toggleScanlines(e.target.checked);
+  });
+
+  // Quick Front Toggle: Digicam Retro Date Stamp
+  btnDateToggle.addEventListener('click', () => {
+    const isDateOn = camera.toggleDateStamp();
+    btnDateToggle.classList.toggle('active', isDateOn);
+    playBeepSound(720, 0.04);
+  });
 
   // Flash LED Toggle
   btnFlashToggle.addEventListener('click', async () => {
@@ -263,10 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
   selectFps.addEventListener('change', (e) => {
     camera.setTargetFps(e.target.value);
     playBeepSound(650, 0.04);
-  });
-
-  checkLcdLines.addEventListener('change', (e) => {
-    lcdScanlinesOverlay.classList.toggle('hidden', !e.target.checked);
   });
 
   // Side Panel C++ Exporter

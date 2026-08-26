@@ -13,6 +13,7 @@ class PocketCamera {
     this.mediaStream = null;
     this.sampleImg = null;
     this.flashMode = 'off'; // 'off', 'on', 'auto'
+    this.showDateStamp = true; // Retro Digicam Date Stamp ON/OFF
     
     this.activeFilterId = 'fuji_classic_chrome';
     this.filterParams = {
@@ -100,7 +101,6 @@ class PocketCamera {
       this.currentSource = 'webcam';
       this.isStreaming = true;
       
-      // Auto apply torch/flash to the new stream if enabled
       await this.applyTorchState();
 
       this.startRenderLoop();
@@ -128,6 +128,11 @@ class PocketCamera {
     return this.flashMode;
   }
 
+  toggleDateStamp() {
+    this.showDateStamp = !this.showDateStamp;
+    return this.showDateStamp;
+  }
+
   async applyTorchState(forceTorchState = null) {
     if (!this.mediaStream) return;
     const track = this.mediaStream.getVideoTracks()[0];
@@ -150,7 +155,6 @@ class PocketCamera {
   }
 
   async pulseFlashlight() {
-    // Pulse physical flash for 350ms on shutter press (works on Android back camera)
     if (!this.mediaStream) return;
     const track = this.mediaStream.getVideoTracks()[0];
     if (!track) return;
@@ -163,7 +167,7 @@ class PocketCamera {
         }
       }, 350);
     } catch (e) {
-      // Torch constraint not supported on this specific browser/facing mode
+      // Torch constraint not supported
     }
   }
 
@@ -226,7 +230,6 @@ class PocketCamera {
       const vw = this.video.videoWidth;
       const vh = this.video.videoHeight;
       
-      // Calculate exact aspect ratio cropping to match canvas pixel ratio
       let sx = 0, sy = 0, sw = vw, sh = vh;
       const targetRatio = w / h;
       const videoRatio = vw / vh;
@@ -257,9 +260,30 @@ class PocketCamera {
       return;
     }
 
+    // Apply Active Filter
     const filterObj = PocketFilters.registry[this.activeFilterId];
     if (filterObj && filterObj.apply) {
       filterObj.apply(this.ctx, w, h, this.filterParams);
+    }
+
+    // Draw Retro Digicam Date Stamp (Orange LED font at bottom right)
+    if (this.showDateStamp) {
+      this.ctx.save();
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const dateStr = `'${yy} ${mm} ${dd}`;
+
+      this.ctx.font = 'bold 11px "Press Start 2P", monospace';
+      this.ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+      this.ctx.shadowOffsetX = 1;
+      this.ctx.shadowOffsetY = 1;
+      this.ctx.shadowBlur = 3;
+      this.ctx.fillStyle = '#ff6c00'; // Classic 90s digicam orange
+      this.ctx.textAlign = 'right';
+      this.ctx.fillText(dateStr, w - 8, h - 8);
+      this.ctx.restore();
     }
   }
 

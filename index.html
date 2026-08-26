@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pocket Camera Web App (Fujifilm & Retro Filters)</title>
   <meta name="description" content="Aplikasi Kamera Smartphone Web dengan Simulasi Film Fujifilm, Game Boy Camera, 3DS Digicam, dan C++ Exporter.">
-  <link rel="stylesheet" href="styles.css?v=2.3.0">
+  <link rel="stylesheet" href="styles.css?v=2.4.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="camera-app">
@@ -26,11 +26,20 @@
       </div>
 
       <div class="top-bar-right">
+        <!-- Quick Front Toggle: LCD Scanlines -->
+        <button id="btn-scanline-toggle" class="icon-btn active" title="Toggle Scanlines LCD">
+          📺
+        </button>
+        <!-- Quick Front Toggle: Digicam Retro Date Stamp -->
+        <button id="btn-date-toggle" class="icon-btn active" title="Toggle Stempel Tanggal">
+          📅
+        </button>
+        <!-- C++ Code Exporter -->
         <button id="btn-toggle-cpp" class="pill-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-          C++ Code
+          C++
         </button>
-        <!-- Replaced duplicate gallery icon with LED Flash Toggle -->
+        <!-- Flash LED -->
         <button id="btn-flash-toggle" class="icon-btn" title="Toggle Flash LED">
           <span id="flash-icon-label">⚡</span>
         </button>
